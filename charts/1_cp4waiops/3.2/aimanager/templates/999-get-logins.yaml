@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 999-get-logins-aimanager
+  annotations:
+    argocd.argoproj.io/sync-wave: "999"
+    argocd.argoproj.io/hook: PostSync
+  namespace: {{.Values.spec.aiManager.namespace}}
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "***************************************************************************************************************************************************"
+              echo "***************************************************************************************************************************************************"
+              echo "🚀 CloudPak for Watson AIOps"
+              echo "***************************************************************************************************************************************************"
+              echo "***************************************************************************************************************************************************"
+              echo "    "
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    🚀 AI Manager"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    "
+              echo "      📥 AI Manager"
+              echo ""
+              echo "                🌏 URL:      https://$(oc get route -n {{.Values.spec.aiManager.namespace}} cpd -o jsonpath={.spec.host})"
+              echo "                🧑 User:     demo"
+              echo "                🔐 Password: P4ssw0rd!"
+              echo ""
+              echo "                🧑 User:     $(oc -n ibm-common-services get secret platform-auth-idp-credentials -o jsonpath='{.data.admin_username}' | base64 --decode && echo)"
+              echo "                🔐 Password: $(oc -n ibm-common-services get secret platform-auth-idp-credentials -o jsonpath='{.data.admin_password}' | base64 --decode)"
+              echo "     "
+              echo "     "
+              echo "     "       
+              echo "      📥 Administration hub / Common Services"
+              echo ""
+              echo "                🌏 URL:      https://$(oc get route -n ibm-common-services cp-console -o jsonpath={.spec.host})"
+              echo "                🧑 User:     demo"
+              echo "                🔐 Password: P4ssw0rd!"
+              echo ""
+              echo "                🧑 User:     $(oc -n ibm-common-services get secret platform-auth-idp-credentials -o jsonpath='{.data.admin_username}' | base64 --decode && echo)"
+              echo "                🔐 Password: $(oc -n ibm-common-services get secret platform-auth-idp-credentials -o jsonpath='{.data.admin_password}' | base64 --decode)"
+              echo "    "
+              echo "    "
+              echo "    "
+              echo "    "
+    
+
+          
+      serviceAccountName: openshift-argocd-admin-ai
+      restartPolicy: Never
+  backoffLimit: 4

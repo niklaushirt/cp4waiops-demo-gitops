@@ -1,0 +1,57 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 999-get-logins-awx
+  annotations:
+    argocd.argoproj.io/sync-wave: "999"
+    argocd.argoproj.io/hook: PostSync
+  namespace: awx
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    🚀 AWX "
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    "
+              echo "            📥 AWX :"
+              echo ""
+              echo "                🌏 URL:      https://$(oc get route -n awx awx -o jsonpath={.spec.host})"
+              echo "                🧑 User:     admin"
+              echo "                🔐 Password: $(oc -n awx get secret awx-admin-password -o jsonpath='{.data.password}' | base64 --decode && echo)"
+              echo "    "
+              echo "    "
+              echo "    "
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    🚀 For Runbook Integration: "
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+
+              DEMO_TOKEN=$(oc -n default get secret $(oc get secret -n default |grep -m1 demo-admin-token|awk '{print$1}') -o jsonpath='{.data.token}'|base64 --decode)
+              DEMO_URL=$(oc status|grep -m1 "In project"|awk '{print$6}')
+
+              echo "{"
+              echo "\"my_k8s_apiurl\": \"$DEMO_URL\","
+              echo "\"my_k8s_apikey\": \"$DEMO_TOKEN\""
+              echo "}"
+              echo "    "
+
+          
+      serviceAccountName: openshift-argocd-admin-ai
+      restartPolicy: Never
+  backoffLimit: 4

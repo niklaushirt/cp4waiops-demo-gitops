@@ -1,0 +1,34 @@
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 010-robot-shop-patch
+  namespace: robot-shop
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              oc adm policy add-scc-to-user privileged -n robot-shop -z robot-shop || true
+              oc create clusterrolebinding default-robotinfo1-admin --clusterrole=cluster-admin --serviceaccount=robot-shop:robot-shop || true
+              oc adm policy add-scc-to-user privileged -n robot-shop -z default                                 || true
+              oc create clusterrolebinding default-robotinfo2-admin --clusterrole=cluster-admin --serviceaccount=robot-shop:default || true
+
+      serviceAccountName: openshift-argocd-admin-ai           
+      restartPolicy: Never
+  backoffLimit: 4

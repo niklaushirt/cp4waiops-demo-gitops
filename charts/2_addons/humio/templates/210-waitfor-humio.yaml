@@ -1,0 +1,41 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 210-waitfor-humio
+  annotations:
+    argocd.argoproj.io/sync-wave: "210"
+  namespace: humio-logging
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -x
+
+              while : ; do
+                READY=$(oc get po -n humio-logging | grep humiocluster-core)
+                if [[ ! $READY  =~ '2/2' ]]; then
+                  echo 'Humio not ready yet.'
+                  sleep 10s
+                else
+                  break
+                fi
+              done
+
+      restartPolicy: Never
+      serviceAccountName: humio-operator
+  backoffLimit: 4

@@ -1,0 +1,36 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 100-humio-patch-accounts
+  annotations:
+    argocd.argoproj.io/sync-wave: "090"
+  namespace: humio-logging
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -x
+
+              oc adm policy add-scc-to-user privileged -n humio-logging -z humio-operator || true
+              oc adm policy add-scc-to-user privileged -n humio-logging -z humiocluster-humio || true
+              oc create clusterrolebinding default-humio-admin --clusterrole=cluster-admin --serviceaccount=humio-logging:default || true
+
+
+      restartPolicy: Never
+      serviceAccountName: openshift-argocd-admin-ai
+  backoffLimit: 4

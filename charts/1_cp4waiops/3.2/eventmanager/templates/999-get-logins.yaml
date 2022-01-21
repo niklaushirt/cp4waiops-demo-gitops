@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 999-get-logins-eventmanager
+  annotations:
+    argocd.argoproj.io/sync-wave: "999"
+    argocd.argoproj.io/hook: PostSync
+  namespace: {{.Values.spec.eventManager.namespace}}
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    🚀 Event Manager (Netcool Operations Insight)"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    "
+              echo "      📥 Event Manager"
+              echo ""
+              echo "            🌏 URL:      https://$(oc get route -n {{.Values.spec.eventManager.namespace}}  evtmanager-ibm-hdm-common-ui -o jsonpath={.spec.host})"
+              echo "            🧑 User:     demo"
+              echo "            🔐 Password: P4ssw0rd!"
+              echo ""
+              echo "            🧑 User:     smadmin"
+              echo "            🔐 Password: $(oc get secret -n {{.Values.spec.eventManager.namespace}}  evtmanager-was-secret -o jsonpath='{.data.WAS_PASSWORD}'| base64 --decode && echo)"
+              echo ""
+              echo "       ---------------------------------------------------------------------------------------------"
+              echo "        EventManager/NOI WEBHOOK:"
+              echo "            URL:   <PASTE HERE FOR DOCUMENTATION WHEN CREATED>"
+              echo "    "
+              echo "    "
+              echo "    "
+              echo "    "
+    
+
+          
+      serviceAccountName: openshift-argocd-admin-evt
+      restartPolicy: Never
+  backoffLimit: 4

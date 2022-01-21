@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cp4waiops-aimanager
+  namespace: openshift-gitops
+spec:
+  destination:
+    name: ''
+    namespace: cp4waiops
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: charts/1_cp4waiops/3.2/aimanager
+    repoURL: 'https://github.com/niklaushirt/cp4waiops-gitops'
+    targetRevision: 
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: spec.dockerPassword
+          value: >-
+            <PULL_TOKEN>
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      #- Validate=false
+      - SkipDryRunOnMissingResource=true
+      #- FailOnSharedResource=true
+      #- CreateNamespace=true
+

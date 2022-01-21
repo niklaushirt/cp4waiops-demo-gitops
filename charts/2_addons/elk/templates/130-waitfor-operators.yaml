@@ -1,0 +1,47 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 130-waitfor-operators
+  annotations:
+    argocd.argoproj.io/sync-wave: "130"
+  namespace: openshift-logging
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -x
+
+                while : ; do
+                READY=$(oc get pod -n openshift-logging | grep -v "1/1\|2/2\|3/3\|4/4"|wc -l|tr -d ' ')
+                if [[  $READY  -gt '1' ]]; then
+                  echo 'Deployment not completed yet.'
+                  sleep 30
+                else
+                  break
+                fi
+              done
+
+              rm admin-ca || true
+              oc delete route  elasticsearch -n openshift-logging || true
+              oc extract secret/elasticsearch -n openshift-logging --to=. --keys=admin-ca --confirm || true
+              oc create route reencrypt elasticsearch -n openshift-logging --service=elasticsearch --port=elasticsearch --dest-ca-cert=admin-ca || true
+              rm admin-ca   || true
+
+      restartPolicy: Never
+      serviceAccountName: cluster-logging-operator
+  backoffLimit: 4

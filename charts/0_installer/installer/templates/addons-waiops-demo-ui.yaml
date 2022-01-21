@@ -1,0 +1,26 @@
+{{- if .Values.addons.CP4WAIOPSDemoUIInstall }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: waiops-demo-ui
+  namespace: openshift-gitops
+spec:
+  destination:
+    name: ''
+    namespace: cp4waiops
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: charts/2_addons/waiops-demo-ui
+    repoURL: 'https://github.com/niklaushirt/cp4waiops-gitops'
+    targetRevision: 
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      #- Validate=false
+      - SkipDryRunOnMissingResource=true
+      #- FailOnSharedResource=true
+      - CreateNamespace=true
+{{- end }}

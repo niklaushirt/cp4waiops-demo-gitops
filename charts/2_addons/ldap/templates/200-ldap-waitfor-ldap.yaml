@@ -1,0 +1,41 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 200-ldap-waitfor-ldap
+  annotations:
+    argocd.argoproj.io/sync-wave: "200"
+  namespace: {{.Values.aiManagerNamespace}}
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -x
+
+              while : ; do
+                READY=$(oc get po -n default | grep ldap)
+                if [[ $READY  =~ '0/1' ]]; then
+                  echo 'LDAP Pods not ready yet.'
+                  sleep 10s
+                else
+                  break
+                fi
+              done
+
+      restartPolicy: Never
+      serviceAccountName: openshift-argocd-admin-ai
+  backoffLimit: 4

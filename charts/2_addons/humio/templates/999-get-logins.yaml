@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 999-get-logins-humio
+  annotations:
+    argocd.argoproj.io/sync-wave: "999"
+    argocd.argoproj.io/hook: PostSync
+  namespace: humio-logging
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    🚀 HUMIO "
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    "
+              echo "            📥 HUMIO:"
+              echo ""
+              echo "                🌏 URL:      http://$(oc get route -n humio-logging humio -o jsonpath={.spec.host})"
+              echo "                🧑 User:     developer"
+              echo "                🔐 Password: P4ssw0rd!"
+              echo "    "
+              echo "    "
+              echo "    "
+              echo "                INTEGRATION URL:      http://$(oc get route -n humio-logging humio -o jsonpath={.spec.host})/api/v1/repositories/aiops/query"
+              echo "    "
+              echo "    "
+              echo "    "
+              echo "    "
+
+          
+      serviceAccountName: openshift-argocd-admin-ai
+      restartPolicy: Never
+  backoffLimit: 4

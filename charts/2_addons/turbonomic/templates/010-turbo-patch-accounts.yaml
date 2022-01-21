@@ -1,0 +1,37 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 010-turbo-patch-accounts
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+  namespace: turbonomic
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -x
+
+              oc adm policy add-scc-to-group anyuid system:serviceaccounts:turbonomic || true
+              oc create clusterrolebinding turbonomic-admin1 --clusterrole=cluster-admin --serviceaccount=turbonomic:t8c-operator || true
+              oc create clusterrolebinding turbonomic-admin2 --clusterrole=cluster-admin --serviceaccount=turbonomic:turbo-user || true
+              oc create clusterrolebinding default-turbo-admin --clusterrole=cluster-admin --serviceaccount=turbonomic:default || true
+
+
+      restartPolicy: Never
+      serviceAccountName: openshift-argocd-admin-ai
+  backoffLimit: 4

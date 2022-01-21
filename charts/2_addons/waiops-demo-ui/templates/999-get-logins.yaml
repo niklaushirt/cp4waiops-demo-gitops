@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 999-get-logins-demo
+  annotations:
+    argocd.argoproj.io/sync-wave: "999"
+    argocd.argoproj.io/hook: PostSync
+  namespace: {{.Values.aiManagerNamespace}}
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    🚀 Demo UI "
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    " 
+              echo "            📥 OPENLDAP:"
+              echo "    " 
+              echo "                🌏 URL:      http://$(oc get route -n cp4waiops cp4waiops-demo-ui -o jsonpath={.spec.host})"
+              echo "                🔐 Password: $(oc get cm -n cp4waiops demo-ui-config  -o jsonpath={.data.TOKEN})"
+              echo "    "
+              echo "    "
+              echo "    "
+              echo "    "
+          
+      serviceAccountName: openshift-argocd-admin-ai
+      restartPolicy: Never
+  backoffLimit: 4

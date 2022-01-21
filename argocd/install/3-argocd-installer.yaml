@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: installer
+  namespace: openshift-gitops
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/niklaushirt/cp4waiops-gitops'
+    path: charts/0_installer/installer
+    targetRevision: 
+    helm:
+      parameters:
+        - name: version
+          value: '1.0'
+        - name: activeBranch
+          value: main
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: default
+

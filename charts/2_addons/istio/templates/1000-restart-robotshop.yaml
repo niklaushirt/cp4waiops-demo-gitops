@@ -1,0 +1,99 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 1000-restart-robotshop
+  annotations:
+    argocd.argoproj.io/sync-wave: "1000"
+    argocd.argoproj.io/hook: PostSync
+  namespace: istio-system
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -x
+
+              ISTIO_INGRESSGATEWAY=$(oc get route -n istio-system istio-ingressgateway -o jsonpath={.spec.host})
+              echo "http://$ISTIO_INGRESSGATEWAY"
+
+              cat <<EOF | oc apply -f -
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: load
+                namespace: robot-shop
+                labels:
+                  service: load
+                annotations:
+                  argocd.argoproj.io/sync-wave: "310"
+              spec:
+                replicas: 1
+                selector:
+                  matchLabels:
+                    app: robot-shop
+                    version: v1
+                    service: load
+                template:
+                  metadata:
+                    annotations:
+                      sidecar.istio.io/inject: "true"
+                    labels:
+                      app: robot-shop
+                      version: v1
+                      service: load
+                  spec:
+                    containers:
+                    - name: load
+                      env:
+                        - name: HOST
+                          value: http://$ISTIO_INGRESSGATEWAY
+                        - name: NUM_CLIENTS
+                          value: "15"
+                        - name: SILENT
+                          value: "0"
+                        - name: ERROR
+                          value: "0"
+                      image: robotshop/rs-load:latest
+                      resources:
+                        limits:
+                          cpu: 500m
+                          memory: 500Mi
+                        requests:
+                          cpu: 100m
+                          memory: 100Mi
+              ---
+              apiVersion: v1
+              kind: Service
+              metadata:
+                name: load
+                namespace: robot-shop
+              spec:
+                ports:
+                  - name: load
+                    protocol: TCP
+                    port: 80
+                    targetPort: 80
+                selector:
+                  service: load
+                type: ClusterIP
+                sessionAffinity: None
+              EOF
+              oc delete pods $(oc get po -n robot-shop --no-headers|grep -v "2/2"|awk '{print$1}') -n robot-shop || true
+
+                     
+      serviceAccountName: openshift-argocd-admin-ai
+      restartPolicy: Never
+  backoffLimit: 4

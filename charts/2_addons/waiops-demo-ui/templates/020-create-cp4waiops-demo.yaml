@@ -1,0 +1,65 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-ui
+  namespace: {{.Values.waiopsNamespace}}
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+  labels:
+      app:  demo-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app:  demo-ui
+  template:
+    metadata:
+      labels:
+        app:  demo-ui
+    spec:
+      containers:
+      - image: niklaushirt/cp4waiops-demo-ui:2.4
+        imagePullPolicy: Always
+        name: gateway
+        command:
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "50Mi"
+          limits:
+            cpu: "550m"
+            memory: "550Mi"
+        envFrom:
+        - configMapRef:
+            name:  demo-ui-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name:  demo-ui-service
+  namespace: {{.Values.waiopsNamespace}}
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  selector:
+    app:  demo-ui
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name:  cp4waiops-demo-ui
+  namespace: {{.Values.waiopsNamespace}}
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  to:
+    kind: Service
+    name:  demo-ui-service
+

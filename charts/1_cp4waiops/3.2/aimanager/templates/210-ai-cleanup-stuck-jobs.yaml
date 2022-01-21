@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 210-argo-cp4waiops-cleanup-stuck-jobs
+  annotations:
+    argocd.argoproj.io/sync-wave: "210"
+  namespace: {{.Values.spec.aiManager.namespace}}
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -x
+
+              READY=$(oc get job -n {{.Values.spec.aiManager.namespace}} aiops-ir-lifecycle-create-policies-job -o jsonpath={".status.conditions[].reason"})
+              if [[ $READY  =~ 'BackoffLimitExceeded' ]]; then
+                echo 'Topology Pods not ready yet.'
+                oc delete job -n {{.Values.spec.aiManager.namespace}} aiops-ir-lifecycle-create-policies-job
+              fi
+
+              READY=$(oc get job -n {{.Values.spec.aiManager.namespace}} aiops-ir-lifecycle-policy-registry-svc-job -o jsonpath={".status.conditions[].reason"})
+              if [[ $READY  =~ 'BackoffLimitExceeded' ]]; then
+                echo 'Topology Pods not ready yet.'
+                oc delete job -n {{.Values.spec.aiManager.namespace}} aiops-ir-lifecycle-policy-registry-svc-job
+              fi
+
+
+
+      restartPolicy: Never
+      serviceAccountName: openshift-argocd-admin-ai
+  backoffLimit: 4

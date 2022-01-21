@@ -1,0 +1,25 @@
+
+apiVersion: orchestrator.aiops.ibm.com/v1alpha1
+kind: Installation
+metadata:
+  name: {{.Values.spec.aiManager.installationName}}
+  namespace: {{.Values.spec.aiManager.namespace}}
+  annotations:
+    argocd.argoproj.io/sync-wave: "130"
+spec:
+  imagePullSecret: ibm-entitlement-key
+  license:
+    accept: true
+  pakModules:
+    - enabled: true
+      name: aiManager
+    - enabled: true
+      name: aiopsFoundation
+    - enabled: true
+      name: applicationManager
+    - enabled: true
+      name: connection
+  size: {{.Values.spec.aiManager.size}}
+  storageClass: '{{.Values.spec.storageClass}}'
+  storageClassLargeBlock: '{{.Values.spec.storageClassLargeBlock}}'
+

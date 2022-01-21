@@ -1,0 +1,27 @@
+extends boilerplate
+
+
+block content
+  h3#toc_0 CP4WAIOPS AIManager Demo UI
+  p
+    | A Simple way to generate Events and Log Anomalies for CP4WAIOPS.
+  p 
+  p 
+  p 
+  h3 Create Live Events and Log Anomalies 
+  h4 by using the buttons below
+
+
+  form(action='/test' method='POST')
+    label TOKEN
+    input#exampleFormControlInput1.form-control(type='password' name='token' required='' placeholder='my-token')
+    button.btn.btn-danger.mb-3(type='reset') Reset
+    button.btn.btn-success.mb-3(type='submit') Authenticate
+
+
+  a.btn.btn-danger.btn-lg(href='/demo' role='button') Create Events and Log Anomalies
+  p
+  a.btn.btn-danger.btn-lg(href='/demo_event' role='button') Create Events
+  p
+  a.btn.btn-danger.btn-lg(href='/demo_log' role='button') Create Log Anomalies
+  p

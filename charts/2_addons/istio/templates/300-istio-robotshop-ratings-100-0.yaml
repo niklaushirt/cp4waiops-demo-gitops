@@ -1,0 +1,34 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: robotshop-canary-ratings
+  namespace: robot-shop
+  annotations:
+    argocd.argoproj.io/sync-wave: "300"
+spec:
+  hosts:
+  - ratings.robot-shop.svc.cluster.local
+  http:
+  - route:
+    - destination:
+        host: ratings.robot-shop.svc.cluster.local
+        subset: production
+      weight: 25
+    - destination:
+        host: ratings.robot-shop.svc.cluster.local
+        subset: canary
+      weight: 75
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: robotshop-ratings-dr
+spec:
+  host: ratings.robot-shop.svc.cluster.local
+  subsets:
+  - name: production
+    labels:
+      stage: prod
+  - name: canary
+    labels:
+      stage: test

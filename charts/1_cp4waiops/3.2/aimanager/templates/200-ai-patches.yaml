@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 200-argo-cp4waiops-patches
+  annotations:
+    argocd.argoproj.io/sync-wave: "200"
+  namespace: {{.Values.spec.aiManager.namespace}}
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -x
+              oc patch namespace default --type=json -p '[{"op":"add","path":"/metadata/labels","value":{"network.openshift.io/policy-group":"ingress"}}]'
+
+
+              while : ; do
+                READY=$(oc get AIOpsAnalyticsOrchestrator -n {{.Values.spec.aiManager.namespace}} | grep aiops)
+                if [[ ! $READY  =~ 'aiops' ]]; then
+                  echo 'AIOpsAnalyticsOrchestrator not ready yet.'
+                  sleep 30
+                else
+                  break
+                fi
+              done
+              oc patch AIOpsAnalyticsOrchestrator aiops -n cp4waiops --type merge  --patch '{"spec": {"pullSecrets": ["ibm-aiops-pull-secret"]}}'
+
+              
+
+      restartPolicy: Never
+      serviceAccountName: openshift-argocd-admin-ai
+  backoffLimit: 4

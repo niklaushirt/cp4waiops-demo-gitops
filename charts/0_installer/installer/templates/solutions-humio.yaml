@@ -1,0 +1,33 @@
+{{- if .Values.solutions.HumioInstall }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: humio
+  namespace: openshift-gitops
+spec:
+  destination:
+    name: ''
+    namespace: humio-logging
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: charts/2_addons/humio
+    repoURL: 'https://github.com/niklaushirt/cp4waiops-gitops'
+    targetRevision: 
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: humioLicense
+          value: >-
+            {{.Values.solutions.HumioLicense }}
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      #- Validate=false
+      - SkipDryRunOnMissingResource=true
+      - FailOnSharedResource=true
+      - CreateNamespace=true
+{{- end }}

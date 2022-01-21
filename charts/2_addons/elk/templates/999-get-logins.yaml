@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 999-get-logins-elk
+  annotations:
+    argocd.argoproj.io/sync-wave: "999"
+    argocd.argoproj.io/hook: PostSync
+  namespace: openshift-logging
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    🚀 ELK "
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              token=$(oc sa get-token cluster-logging-operator -n openshift-logging)
+              routeES=`oc get route elasticsearch -o jsonpath={.spec.host} -n openshift-logging`
+              routeKIBANA=`oc get route kibana -o jsonpath={.spec.host} -n openshift-logging`
+              echo "      "
+              echo "            📥 ELK:"
+              echo "      "
+              echo "               🌏 ELK service URL             : https://$routeES/app*"
+              echo "               🔐 Authentication type         : Token"
+              echo "               🔐 Token                       : $token"
+              echo "      "
+              echo "               🌏 Kibana URL                  : https://$routeKIBANA"
+              echo "               🚪 Kibana port                 : 443"
+              echo "               🗺️  Mapping                     : "
+              echo "{ "
+              echo "  \"codec\": \"elk\","
+              echo "  \"message_field\": \"message\","
+              echo "  \"log_entity_types\": \"kubernetes.container_image_id, kubernetes.host, kubernetes.pod_name, kubernetes.namespace_name\","
+              echo "  \"instance_id_field\": \"kubernetes.container_name\","
+              echo "  \"rolling_time\": 10,"
+              echo "  \"timestamp_field\": \"@timestamp\""
+              echo "}"
+              echo "  "
+              echo ""
+              echo ""
+              echo ""
+
+          
+      serviceAccountName: cluster-logging-operator
+      restartPolicy: Never
+  backoffLimit: 4

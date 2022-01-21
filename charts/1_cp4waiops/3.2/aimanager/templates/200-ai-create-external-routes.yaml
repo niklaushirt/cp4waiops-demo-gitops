@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 200-argo-cp4waiops-create-extrenal-routes
+  annotations:
+    argocd.argoproj.io/sync-wave: "200"
+  namespace: {{.Values.spec.aiManager.namespace}}
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              oc create route passthrough topology-merge -n {{.Values.spec.aiManager.namespace}} --insecure-policy="Redirect" --service=aiops-topology-merge --port=https-merge-api || true
+              oc create route passthrough topology-rest -n {{.Values.spec.aiManager.namespace}} --insecure-policy="Redirect" --service=aiops-topology-rest-observer --port=https-rest-observer-admin || true
+              oc create route passthrough topology-manage -n {{.Values.spec.aiManager.namespace}} --service=evtmanager-topology-topology --port=https-topology-api || true
+              oc create route edge job-manager -n {{.Values.spec.aiManager.namespace}} --service=cp4waiops-eventprocessor-eve-29ee-ep-jobmanager --port=ui || true
+              oc create route passthrough ai-platform-api -n {{.Values.spec.aiManager.namespace}}  --service=aimanager-aio-ai-platform-api-server --port=4000 --insecure-policy=Redirect --wildcard-policy=None || true
+              oc create route reencrypt datalayer-api -n {{.Values.spec.aiManager.namespace}}  --service=aiops-ir-core-ncodl-api --port=secure-port --insecure-policy=Redirect --wildcard-policy=None || true
+
+
+
+      restartPolicy: Never
+      serviceAccountName: openshift-argocd-admin-ai
+  backoffLimit: 4

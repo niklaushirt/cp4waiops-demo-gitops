@@ -1,0 +1,86 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 210-argo-cp4waiops-patch-topology-deployment
+  annotations:
+    argocd.argoproj.io/sync-wave: "210"
+  namespace: {{.Values.spec.aiManager.namespace}}
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -x
+
+              while : ; do
+                READY=$(oc get po -n {{.Values.spec.aiManager.namespace}} | grep aiops-topology-merge)
+                if [[ ! $READY  =~ '/1' ]]; then
+                  echo 'Topology Pods not ready yet.'
+                  sleep 30
+                else
+                  break
+                fi
+              done
+              oc patch deployment aiops-topology-merge -n {{.Values.spec.aiManager.namespace}} --type=json -p='[{"op": "remove", "path": "/metadata/ownerReferences"}]'
+              oc patch deployment aiops-topology-merge -n {{.Values.spec.aiManager.namespace}} -p '{"spec":{"template":{"spec":{"containers":[{"name":"aiops-topology-merge","readinessProbe":{"failureThreshold":32}}]}}}}'
+              oc patch deployment aiops-topology-merge -n {{.Values.spec.aiManager.namespace}} -p '{"spec":{"template":{"spec":{"containers":[{"name":"aiops-topology-merge","readinessProbe":{"failureThreshold":62}}]}}}}'
+
+
+              while : ; do
+                READY=$(oc get po -n {{.Values.spec.aiManager.namespace}} | grep aiops-topology-search)
+                if [[ ! $READY  =~ '/1' ]]; then
+                  echo 'Topology Pods not ready yet.'
+                  sleep 30
+                else
+                  break
+                fi
+              done
+              oc patch deployment aiops-topology-search -n {{.Values.spec.aiManager.namespace}} --type=json -p='[{"op": "remove", "path": "/metadata/ownerReferences"}]'
+              oc patch deployment aiops-topology-search -n {{.Values.spec.aiManager.namespace}} -p '{"spec":{"template":{"spec":{"containers":[{"name":"aiops-topology-search","readinessProbe":{"failureThreshold":32}}]}}}}'
+              oc patch deployment aiops-topology-search -n {{.Values.spec.aiManager.namespace}} -p '{"spec":{"template":{"spec":{"containers":[{"name":"aiops-topology-search","readinessProbe":{"failureThreshold":62}}]}}}}'
+
+
+              while : ; do
+                READY=$(oc get po -n {{.Values.spec.aiManager.namespace}} | grep aiops-topology-status)
+                if [[ ! $READY  =~ '/1' ]]; then
+                  echo 'Topology Pods not ready yet.'
+                  sleep 30
+                else
+                  break
+                fi
+              done    
+              oc patch deployment aiops-topology-status -n {{.Values.spec.aiManager.namespace}} --type=json -p='[{"op": "remove", "path": "/metadata/ownerReferences"}]'
+              oc patch deployment aiops-topology-status -n {{.Values.spec.aiManager.namespace}} -p '{"spec":{"template":{"spec":{"containers":[{"name":"aiops-topology-status","readinessProbe":{"failureThreshold":32}}]}}}}'
+              oc patch deployment aiops-topology-status -n {{.Values.spec.aiManager.namespace}} -p '{"spec":{"template":{"spec":{"containers":[{"name":"aiops-topology-status","readinessProbe":{"failureThreshold":62}}]}}}}'
+
+
+              while : ; do
+                READY=$(oc get po -n {{.Values.spec.aiManager.namespace}} | grep aiops-topology-layout)
+                if [[ ! $READY  =~ '/1' ]]; then
+                  echo 'Topology Pods not ready yet.'
+                  sleep 30
+                else
+                  break
+                fi
+              done
+              oc patch deployment aiops-topology-layout -n {{.Values.spec.aiManager.namespace}} --type=json -p='[{"op": "remove", "path": "/metadata/ownerReferences"}]'
+              oc patch deployment aiops-topology-layout -n {{.Values.spec.aiManager.namespace}} -p '{"spec":{"template":{"spec":{"containers":[{"name":"aiops-topology-layout","readinessProbe":{"failureThreshold":32}}]}}}}'
+              oc patch deployment aiops-topology-layout -n {{.Values.spec.aiManager.namespace}} -p '{"spec":{"template":{"spec":{"containers":[{"name":"aiops-topology-layout","readinessProbe":{"failureThreshold":62}}]}}}}'
+
+
+      restartPolicy: Never
+      serviceAccountName: openshift-argocd-admin-ai
+  backoffLimit: 4

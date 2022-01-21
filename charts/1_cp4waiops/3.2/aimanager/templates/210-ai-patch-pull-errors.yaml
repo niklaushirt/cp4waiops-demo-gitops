@@ -1,0 +1,79 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 210-argo-cp4waiops-patch-pull-errors
+  annotations:
+    argocd.argoproj.io/sync-wave: "210"
+  namespace: {{.Values.spec.aiManager.namespace}}
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -x
+
+
+
+
+
+
+              # while : ; do
+              #   READY=$(oc get sa -n {{.Values.spec.aiManager.namespace}} | grep aiops-topology-service-account)
+              #   if [[ ! $READY  =~ 'aiops-topology-service-account' ]]; then
+              #     echo 'Topology Service Account not present yet.'
+              #     sleep 30
+              #   else
+              #     break
+              #   fi
+              # done
+              # oc patch -n {{.Values.spec.aiManager.namespace}} serviceaccount aiops-topology-service-account -p '{"imagePullSecrets": [{"name": "ibm-entitlement-key"}]}'
+ 
+ 
+              #  while : ; do
+              #   READY=$(oc get po -n {{.Values.spec.aiManager.namespace}} | grep aiops-ir-analytics-|wc -l| tr -d ' ')
+              #   if [[ ! $READY  =~ '5' ]]; then
+              #     echo 'Analytics Pods not ready yet.'
+              #     sleep 30
+              #   else
+              #     break
+              #   fi
+              # done
+              # oc patch -n {{.Values.spec.aiManager.namespace}} serviceaccount aiops-ir-analytics-spark-worker -p '{"imagePullSecrets": [{"name": "ibm-entitlement-key"}]}'
+              # oc patch -n {{.Values.spec.aiManager.namespace}} serviceaccount aiops-ir-analytics-spark-pipeline-composer -p '{"imagePullSecrets": [{"name": "ibm-entitlement-key"}]}'
+              # oc patch -n {{.Values.spec.aiManager.namespace}} serviceaccount aiops-ir-analytics-spark-master -p '{"imagePullSecrets": [{"name": "ibm-entitlement-key"}]}'
+              # oc patch -n {{.Values.spec.aiManager.namespace}} serviceaccount aiops-ir-analytics-probablecause -p '{"imagePullSecrets": [{"name": "ibm-entitlement-key"}]}'
+              # oc patch -n {{.Values.spec.aiManager.namespace}} serviceaccount aiops-ir-analytics-classifier -p '{"imagePullSecrets": [{"name": "ibm-entitlement-key"}]}'
+ 
+ 
+              #  while : ; do
+              #   READY=$(oc get po -n {{.Values.spec.aiManager.namespace}} | grep aiops-ir-lifecycle-eventprocessor-ep)
+              #   if [[ ! $READY  =~ '/1' ]]; then
+              #     echo 'Eventprocessor Pod not ready yet.'
+              #     sleep 30
+              #   else
+              #     break
+              #   fi
+              # done
+              # oc patch -n {{.Values.spec.aiManager.namespace}} serviceaccount aiops-ir-lifecycle-eventprocessor-ep -p '{"imagePullSecrets": [{"name": "ibm-entitlement-key"}]}'
+              
+              
+              oc delete pod $(oc get po -n {{.Values.spec.aiManager.namespace}}|grep ImagePull|awk '{print$1}') -n {{.Values.spec.aiManager.namespace}} || true
+
+
+
+      restartPolicy: Never
+      serviceAccountName: openshift-argocd-admin-ai
+  backoffLimit: 4

@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 999-get-logins-istio
+  annotations:
+    argocd.argoproj.io/sync-wave: "999"
+    argocd.argoproj.io/hook: PostSync
+  namespace: istio-system
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: quay.io/openshift/origin-cli:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    🚀 ServiceMesh/ISTIO "
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
+              echo "    "
+              echo "            📥 ServiceMesh:"
+              echo ""
+              echo "                🌏 RobotShop:     http://$(oc get route -n istio-system istio-ingressgateway -o jsonpath={.spec.host})"
+              echo "                🌏 Kiali:         https://$(oc get route -n istio-system kiali -o jsonpath={.spec.host})"
+              echo "                🌏 Jaeger:        https://$(oc get route -n istio-system jaeger -o jsonpath={.spec.host})"
+              echo "                🌏 Grafana:       https://$(oc get route -n istio-system grafana -o jsonpath={.spec.host})"
+              echo "    "
+              echo "    "
+              echo "          In the begining all traffic is routed to ratings-test"
+              echo "            You can modify the routing by executing:"
+              echo "              All Traffic to test:    oc apply -n robot-shop -f ./tools/01_demo/istio/ratings-100-0.yaml"
+              echo "              Traffic split 50-50:    oc apply -n robot-shop -f ./tools/01_demo/istio/ratings-50-50.yaml"
+              echo "              All Traffic to prod:    oc apply -n robot-shop -f ./tools/01_demo/istio/ratings-0-100.yaml"              echo "    "
+              echo "    "
+              echo "    "
+
+          
+      serviceAccountName: openshift-argocd-admin-ai
+      restartPolicy: Never
+  backoffLimit: 4

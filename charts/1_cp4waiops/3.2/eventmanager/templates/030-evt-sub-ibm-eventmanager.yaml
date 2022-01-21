@@ -1,0 +1,15 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: noi-operator
+  namespace: {{.Values.spec.eventManager.namespace}}
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
+spec:
+  channel: {{.Values.spec.eventManager.channel}}
+  installPlanApproval: Automatic
+  name: noi-operator
+  source: ibm-noi-catalog
+  sourceNamespace: openshift-marketplace
+  startingCSV: noi-operator.v1.3.2
+

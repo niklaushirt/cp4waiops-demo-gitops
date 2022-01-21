@@ -1,0 +1,34 @@
+{{- if .Values.core.eventManager.eventManagerInstall }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cp4waiops-eventmanager
+  namespace: openshift-gitops
+spec:
+  destination:
+    name: ''
+    namespace: cp4waiops-evtmgr
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: charts/1_cp4waiops/3.2/eventmanager
+    repoURL: 'https://github.com/niklaushirt/cp4waiops-gitops'
+    targetRevision: 
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: spec.dockerPassword
+          value: >-
+            {{ .Values.core.eventManager.eventManagerPullToken }}
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      #- Validate=false
+      - SkipDryRunOnMissingResource=true
+      #- FailOnSharedResource=true
+      #- CreateNamespace=true
+
+{{- end }}
