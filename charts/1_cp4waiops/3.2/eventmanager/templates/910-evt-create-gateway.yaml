@@ -1,0 +1,132 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 910-evt-create-gateway
+  annotations:
+    argocd.argoproj.io/sync-wave: "910"
+  namespace: {{.Values.spec.eventManager.namespace}}
+spec:
+  template:
+    spec:
+      containers:
+        - name: config
+          image: niklaushirt/cp4waiops-tools:0.4
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "150m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -x
+
+              echo "   --------------------------------------------------------------------------------------------"
+              echo "    🚀  Patching Certs, new method" 
+              echo "   --------------------------------------------------------------------------------------------"
+              export WAIOPS_NAMESPACE=$(oc get po -A|grep aimanager-operator |awk '{print$1}')
+              export EVENTS_TOPIC=$(oc get kafkatopics.ibmevents.ibm.com -n $WAIOPS_NAMESPACE | grep -v noi-integration| grep -v cp4waiopscp4waiops | grep alerts-$EVENT_TYPE| awk '{print $1;}')
+
+              oc delete secret aiops-omni-secret -n $WAIOPS_NAMESPACE
+              oc get secret evtmanager-omni-secret -n {{.Values.spec.eventManager.namespace}} -ojson | jq -r '.data.OMNIBUS_ROOT_PASSWORD'| base64 -d > ./OMNIBUS_ROOT_PASSWORD
+              oc create secret generic aiops-omni-secret -n $WAIOPS_NAMESPACE --from-literal=username=root --from-file=password=./OMNIBUS_ROOT_PASSWORD --from-file=OMNIBUS_ROOT_PASSWORD=./OMNIBUS_ROOT_PASSWORD
+              rm ./OMNIBUS_ROOT_PASSWORD
+
+
+              cat <<EOF | oc apply -f -
+              apiVersion: networking.k8s.io/v1
+              kind: NetworkPolicy
+              metadata:
+                labels:
+                  release: evtmanager
+                name: evtmanager-gateway-allow-iduc
+                namespace: {{.Values.spec.eventManager.namespace}}
+              spec:
+                ingress:
+                - from: []
+                  ports:
+                    - protocol: TCP
+                      port: 4101
+                podSelector:
+                  matchLabels:
+                    release: evtmanager
+                    appClass: objserv
+                policyTypes:
+                - Ingress
+              ---
+              kind: Service
+              apiVersion: v1
+              metadata:
+                name: evtmanager-objserv-agg-primary
+                namespace: $WAIOPS_NAMESPACE
+              spec:
+                type: ExternalName
+                externalName: evtmanager-objserv-agg-primary.{{.Values.spec.eventManager.namespace}}.svc.cluster.local
+                ports:
+                - port: 4100
+                  name: primary-tds-port
+                - port: 4101
+                  name: primary-iduc-port
+              ---
+              kind: Service
+              apiVersion: v1
+              metadata:
+                name: evtmanager-objserv-agg-backup
+                namespace: $WAIOPS_NAMESPACE
+              spec:
+                type: ExternalName
+                externalName: evtmanager-objserv-agg-backup.{{.Values.spec.eventManager.namespace}}.svc.cluster.local
+                ports:
+                - port: 4100
+                  name: backup-tds-port
+                - port: 4101
+                  name: backup-iduc-port
+                - port: 4300
+                  name: agg-gate-tds-port
+              ---
+              apiVersion: ai-manager.watson-aiops.ibm.com/v1beta1
+              kind: EventManagerGateway
+              metadata:
+                name: eventmanagergateway
+                namespace: $WAIOPS_NAMESPACE
+              spec:
+                logLevel: DEBUG
+                license:
+                  accept: true
+                objectServerPrimaryPort: 6001
+                serviceAccountName: aimanager-operator
+                overrideProps: ''
+                objectServerCAConfigmapName: ''
+                objectServerBackupPort: 6002
+                kafka:
+                  clusterName: iaf-system
+                  namespace: '$WAIOPS_NAMESPACE'
+                  topicName: $EVENTS_TOPIC
+                  userName: $WAIOPS_NAMESPACE-cartridge-kafka-auth
+                objectServerPrimaryIP: ''
+                objectServerPrimaryHost: evtmanager-proxy.{{.Values.spec.eventManager.namespace}}.svc
+                objectServerBackupIP: ''
+                objectServerBackupHost: evtmanager-proxy.{{.Values.spec.eventManager.namespace}}.svc
+                replicationTypes:
+                  - INSERTS
+                  - UPDATES
+                virtualPairName: AGG_V
+                imagePullSecret: ibm-aiops-pull-secret
+                objectServerPrimaryIducHost: eventmanager-objserv-agg-primary
+                omniSecretName: aiops-omni-secret
+                objectServerBackupIducHost: eventmanager-objserv-agg-backup
+                enableTransportDebugLog: true
+                filter: (Severity>2) AND ((AlertGroup = \'robot-shop\') OR (AlertGroup = \'qotd\'))
+                  
+              EOF
+
+
+
+
+      restartPolicy: Never
+      serviceAccountName: openshift-argocd-admin-ai
+  backoffLimit: 4
