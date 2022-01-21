@@ -11,7 +11,7 @@ spec:
   source:
     path: charts/1_cp4waiops/3.2/aimanager
     repoURL: 'https://github.com/niklaushirt/cp4waiops-gitops'
-    targetRevision: 
+    targetRevision: main
     helm:
       valueFiles:
         - values.yaml

@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: 'https://github.com/niklaushirt/cp4waiops-gitops'
     path: charts/0_installer/installer
-    targetRevision: 
+    targetRevision: main
     helm:
       parameters:
         - name: version

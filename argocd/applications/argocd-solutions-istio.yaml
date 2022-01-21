@@ -12,7 +12,7 @@ spec:
   source:
     path: charts/2_addons/istio
     repoURL: 'https://github.com/niklaushirt/cp4waiops-gitops'
-    targetRevision: 
+    targetRevision: main
   project: default
   syncPolicy:
     automated:

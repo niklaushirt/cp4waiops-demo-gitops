@@ -12,7 +12,7 @@ spec:
   source:
     path: charts/2_addons/humio
     repoURL: 'https://github.com/niklaushirt/cp4waiops-gitops'
-    targetRevision: 
+    targetRevision: main
     helm:
       valueFiles:
         - values.yaml
