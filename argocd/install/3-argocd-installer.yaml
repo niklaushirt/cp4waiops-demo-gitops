@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/niklaushirt/cp4waiops-gitops'
+    repoURL: 'https://github.com/niklaushirt/cp4waiops-demo-gitops'
     path: charts/0_installer/installer
     targetRevision: main
     helm:
