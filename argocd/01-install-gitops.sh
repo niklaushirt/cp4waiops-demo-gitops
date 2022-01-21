@@ -114,7 +114,7 @@ export ARGOCD_URL=$(oc get route -n  openshift-gitops  openshift-gitops-server -
 export ARGOCD_USER=admin
 export ARGOCD_PWD=$(oc get secret -n openshift-gitops openshift-gitops-cluster -o "jsonpath={.data['admin\.password']}"| base64 --decode)
 argocd login $ARGOCD_URL --insecure --username $ARGOCD_USER --password $ARGOCD_PWD
-argocd repo add https://github.com/niklaushirt/cp4waiops-gitops --name cp4waiops-repo
+argocd repo add https://github.com/niklaushirt/cp4waiops-demo-gitops --name cp4waiops-repo
 
 echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"
 echo "    -----------------------------------------------------------------------------------------------------------------------------------------------"

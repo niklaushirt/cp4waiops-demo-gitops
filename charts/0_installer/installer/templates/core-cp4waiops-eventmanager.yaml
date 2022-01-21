@@ -11,8 +11,8 @@ spec:
     server: 'https://kubernetes.default.svc'
   source:
     path: charts/1_cp4waiops/3.2/eventmanager
-    repoURL: 'https://github.com/niklaushirt/cp4waiops-gitops'
-    targetRevision: 
+    repoURL: 'https://github.com/niklaushirt/cp4waiops-demo-gitops'
+    targetRevision: 3.2-dev
     helm:
       valueFiles:
         - values.yaml

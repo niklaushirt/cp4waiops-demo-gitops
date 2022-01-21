@@ -164,7 +164,7 @@ spec:
     server: 'https://kubernetes.default.svc'
   source:
     path: charts/cp4waiops/3.2/aimanager
-    repoURL: 'https://github.com/niklaushirt/cp4waiops-gitops'
+    repoURL: 'https://github.com/niklaushirt/cp4waiops-demo-gitops'
     targetRevision: HEAD
     helm:
       valueFiles:
@@ -188,7 +188,7 @@ You should use the provided installer.
 If you want to modify and/or play around with the values you just have to:
 
 - Clone my repository
-- Replace all occurences in of `https://github.com/niklaushirt/cp4waiops-gitops` with your cloned repository 
+- Replace all occurences in of `https://github.com/niklaushirt/cp4waiops-demo-gitops` with your cloned repository 
 - Use the `./tools/00_pushAndAdaptBranch.sh` that will automatically push to your repository and adapt the branch information.
 
 
@@ -208,7 +208,7 @@ Clone the GitHub Repository
 
 
 ```
-git clone https://github.com/niklaushirt/cp4waiops-gitops.git --branch 3.2-stable 
+git clone https://github.com/niklaushirt/cp4waiops-demo-gitops.git --branch 3.2-stable 
 ```
 
 
@@ -430,7 +430,7 @@ And obviosuly you'll need to download this repository to use the scripts.
 
 
 ```
-git clone https://github.com/niklaushirt/cp4waiops-gitops.git --branch 3.2-stable 
+git clone https://github.com/niklaushirt/cp4waiops-demo-gitops.git --branch 3.2-stable 
 ```
 
 You can create your GIT token [here](https://github.ibm.com/settings/tokens).
